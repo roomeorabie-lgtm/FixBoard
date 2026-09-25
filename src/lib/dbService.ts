@@ -396,3 +396,54 @@ export const searchEverything = async (queryTerm: string): Promise<GlobalSearchR
 
   return results.slice(0, 30);
 };
+
+// ============ DATABASE SEEDING ENGINE ============
+export const seedInitialDatabase = async (): Promise<{ count: number }> => {
+  const { REAL_MOBILE_DATASET } = await import('./seedDataset');
+  let count = 0;
+
+  // 1. Seed Brands
+  for (const brand of REAL_MOBILE_DATASET.brands) {
+    await setDoc(doc(db, 'brands', brand.id), brand, { merge: true });
+    count++;
+  }
+
+  // 2. Seed Series
+  for (const s of REAL_MOBILE_DATASET.series) {
+    await setDoc(doc(db, 'series', s.id), s, { merge: true });
+    count++;
+  }
+
+  // 3. Seed Models
+  for (const m of REAL_MOBILE_DATASET.models) {
+    await setDoc(doc(db, 'models', m.id), m, { merge: true });
+    count++;
+  }
+
+  // 4. Seed Motherboards
+  for (const b of REAL_MOBILE_DATASET.boards) {
+    await setDoc(doc(db, 'boards', b.id), b, { merge: true });
+    count++;
+  }
+
+  // 5. Seed Components
+  for (const c of REAL_MOBILE_DATASET.components) {
+    await setDoc(doc(db, 'boardComponents', c.id), c, { merge: true });
+    count++;
+  }
+
+  // 6. Seed Connections / Nets
+  for (const net of REAL_MOBILE_DATASET.connections) {
+    await setDoc(doc(db, 'boardNets', net.id), net, { merge: true });
+    count++;
+  }
+
+  // 7. Seed Schematics & Service Manuals
+  for (const sch of REAL_MOBILE_DATASET.schematics) {
+    await setDoc(doc(db, 'schematics', sch.id), sch, { merge: true });
+    count++;
+  }
+
+  return { count };
+};
+

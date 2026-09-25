@@ -40,7 +40,8 @@ import {
   getUserFavorites,
   toggleFavorite,
   getUserHistory,
-  addHistoryItem
+  addHistoryItem,
+  seedInitialDatabase
 } from './lib/dbService';
 import { 
   Brand, 
@@ -100,12 +101,28 @@ export default function App() {
   const [viewerMode, setViewerMode] = useState<'BOARDVIEW' | 'SCHEMATICS'>('BOARDVIEW');
   const [activeSchematicDoc, setActiveSchematicDoc] = useState<SchematicDoc | null>(null);
 
-  // 1. Initial Load Brands
+  // 1. Initial Load Brands & Auto-seed comprehensive real dataset if empty
   useEffect(() => {
-    getBrands().then(data => {
-      setBrands(data);
-      setLoadingBrands(false);
-    });
+    const initData = async () => {
+      try {
+        let data = await getBrands();
+        if (data.length === 0) {
+          // Database is empty, automatically seed all real brands, series, models, boards, and schematics
+          await seedInitialDatabase();
+          data = await getBrands();
+        }
+        setBrands(data);
+        if (data.length > 0) {
+          setSelectedBrand(data[0]); // Auto select first brand (Apple)
+        }
+      } catch (err) {
+        console.error('Failed to load brands:', err);
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
+    initData();
   }, []);
 
   // 2. Load Series when Brand Selected

@@ -26,7 +26,8 @@ import {
   getBoardsByModel, addBoard, deleteBoard,
   getComponentsByBoard, addComponent, deleteComponent,
   getConnectionsByBoard, addConnectionNet, deleteConnectionNet,
-  addSchematicDoc, getSchematicsByModel, deleteSchematicDoc
+  addSchematicDoc, getSchematicsByModel, deleteSchematicDoc,
+  seedInitialDatabase
 } from '../lib/dbService';
 import { Brand, Series, DeviceModel, Board, BoardComponent, ConnectionNet, SchematicDoc } from '../types';
 
@@ -336,6 +337,27 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3 space-x-reverse">
+          <button
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const res = await seedInitialDatabase();
+                showNotification(`تمت مزامنة واستيراد جميع الأجهزة والمخططات بنجاح (${res.count} عنصر)`);
+                await loadAllData();
+              } catch (err: any) {
+                showNotification('خطأ في الاستيراد: ' + err.message, 'error');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="flex items-center space-x-1.5 space-x-reverse bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs px-3.5 py-2 rounded-lg font-bold transition shadow-md shadow-cyan-600/20 disabled:opacity-50"
+            title="استيراد وتحديث قاعدة بيانات الهواتف والمخططات الشاملة"
+          >
+            <Upload className="w-3.5 h-3.5 ml-1" />
+            <span>مزامنة واستيراد الأجهزة والمخططات الشاملة</span>
+          </button>
+
           <button
             onClick={loadAllData}
             disabled={loading}
