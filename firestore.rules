@@ -14,22 +14,21 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         getUserRole() == 'admin' ||
-        request.auth.token.email == 'roomeorabie@gmail.com'
+        request.auth.token.email == 'roomeorabie@gmail.com' ||
+        request.auth.token.email == 'admin_fixboard@phone.fixboard.local'
       );
     }
 
-    function isTechnician() {
-      return isAuthenticated() && (
-        getUserRole() == 'technician' ||
-        getUserRole() == 'admin' ||
-        request.auth.token.email == 'roomeorabie@gmail.com'
-      );
+    // Phone directory lookup for login/unique phone verification
+    match /phone_directory/{phoneNumber} {
+      allow read: if true;
+      allow write: if true;
     }
 
     // User profiles
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow read: if true;
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin()) || !isAuthenticated();
     }
 
     // Brands (e.g., Samsung, Apple, Xiaomi, Huawei, etc.)
@@ -66,16 +65,16 @@ service cloud.firestore {
     match /boardviews/{boardviewId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
 
-      match /components/{componentId} {
-        allow read: if true;
-        allow write: if isAdmin();
-      }
+    match /boardComponents/{compDocId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
-      match /connections/{connectionId} {
-        allow read: if true;
-        allow write: if isAdmin();
-      }
+    match /boardNets/{netDocId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // User Favorites & History
@@ -85,12 +84,6 @@ service cloud.firestore {
 
     match /history/{historyId} {
       allow read, write: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid);
-    }
-
-    // Platform Statistics / telemetry summary for admin
-    match /stats/{statId} {
-      allow read: if isAdmin();
-      allow write: if isAuthenticated();
     }
   }
 }

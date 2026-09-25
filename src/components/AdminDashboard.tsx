@@ -328,10 +328,10 @@ export const AdminDashboard: React.FC = () => {
             <span className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
               <Building2 className="w-5 h-5" />
             </span>
-            <h1 className="text-xl font-bold text-white">لوحة تحكم إدارة المخططات والأجهزة (Admin Dashboard)</h1>
+            <h1 className="text-xl font-bold text-white">لوحة تحكم منصة FixBoard لإدارة المخططات والأجهزة</h1>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            إدارة الشركات، السلاسل، الموديلات، البوردات، مكونات الـ Boardview، المسارات الكهربائية، وملفات الـ Schematics.
+            إدارة الشركات، السلاسل، الموديلات، البوردات، مكونات الـ Boardview، المسارات الكهربائية، وملفات الـ Schematics لمنصة FixBoard.
           </p>
         </div>
 

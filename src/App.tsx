@@ -263,15 +263,15 @@ export default function App() {
             onClick={() => setCurrentView('EXPLORER')}
             className="flex items-center space-x-2 space-x-reverse cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-600/30">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-600/30">
               <Zap className="w-5 h-5" />
             </div>
             <div>
               <span className="font-bold text-base tracking-wide bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent group-hover:opacity-90">
-                VoltFix Pro
+                FixBoard
               </span>
-              <span className="hidden sm:inline-block text-[10px] text-slate-400 mr-2 border border-slate-700/80 px-1.5 py-0.2 rounded">
-                منصة مخططات الصيانة
+              <span className="hidden sm:inline-block text-[10px] text-slate-400 mr-2 border border-slate-700/80 px-1.5 py-0.2 rounded font-mono">
+                مخططات الصيانة الاحترافية
               </span>
             </div>
           </div>
@@ -339,8 +339,8 @@ export default function App() {
                 </div>
                 <div className="hidden md:block text-right">
                   <div className="text-xs font-semibold text-white leading-tight">{profile?.displayName || 'فني'}</div>
-                  <div className="text-[10px] text-cyan-400 leading-tight">
-                    {profile?.role === 'admin' ? 'مدير المنصة' : 'فني معتمد'}
+                  <div className="text-[10px] text-cyan-400 font-mono leading-tight">
+                    {profile?.phoneNumber ? `📱 ${profile.phoneNumber}` : profile?.role === 'admin' ? 'مدير المنصة' : 'فني معتمد'}
                   </div>
                 </div>
                 <button

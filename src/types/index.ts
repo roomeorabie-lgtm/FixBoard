@@ -76,7 +76,6 @@ export interface BoardComponent {
   partNumber?: string; // e.g., PM8150, WCD9385
   package?: string; // BGA-152, 0201, 0402, QFN-32
   layer: 'TOP' | 'BOTTOM';
-  // Bounding box / coordinates in canvas units (0 to 1000 normalized or mm coordinates)
   x: number;
   y: number;
   width: number;
@@ -84,12 +83,12 @@ export interface BoardComponent {
   rotation?: number; // degrees
   value?: string; // e.g. 10uF 6.3V, 100k ohm, 1.2V
   description?: string;
-  diodeModeValue?: string; // e.g. 0.425 V (very crucial for phone technicians!)
+  diodeModeValue?: string; // e.g. 0.425 V
   resistanceValue?: string;
   voltageValue?: string; // e.g. 3.8V VBAT
   pins?: BoardPin[];
-  connectedNets?: string[]; // Array of net names passing through this component
-  troubleshootingNotes?: string; // e.g., "إذا كان هناك شورت افحص المكثف المجاور C102"
+  connectedNets?: string[];
+  troubleshootingNotes?: string;
 }
 
 export interface ConnectionNet {
@@ -98,7 +97,7 @@ export interface ConnectionNet {
   name: string; // e.g., "VBUS_5V", "PP_VDD_MAIN", "I2C3_SCL", "BAT_SENSE", "GND"
   voltage?: string; // e.g., "4.2V", "1.8V"
   type: 'POWER' | 'GROUND' | 'SIGNAL' | 'DATA' | 'CLOCK' | 'RF';
-  color?: string; // Highlighting color (e.g., #ef4444 for VDD, #3b82f6 for Data, #10b981 for Clock)
+  color?: string;
   points: {
     x: number;
     y: number;
@@ -106,7 +105,6 @@ export interface ConnectionNet {
     refDes?: string;
     pin?: string;
   }[];
-  // Path vectors or polylines if tracing traces
   traces?: {
     layer: 'TOP' | 'BOTTOM';
     path: [number, number][];
@@ -120,7 +118,7 @@ export interface SchematicDoc {
   boardId?: string;
   title: string;
   category: 'SCHEMATIC_PDF' | 'SERVICE_MANUAL' | 'BLOCK_DIAGRAM' | 'PINOUT' | 'REPAIR_GUIDE';
-  fileUrl: string; // External PDF / CDN URL or data
+  fileUrl: string;
   pageCount?: number;
   version?: string;
   createdAt: number;
@@ -128,12 +126,10 @@ export interface SchematicDoc {
 
 export interface UserProfile {
   uid: string;
-  email: string;
+  phoneNumber: string;
   displayName: string;
   role: 'admin' | 'technician' | 'user';
   workshopName?: string;
-  phoneNumber?: string;
-  country?: string;
   avatarUrl?: string;
   createdAt: number;
 }

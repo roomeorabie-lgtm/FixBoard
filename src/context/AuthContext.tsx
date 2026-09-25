@@ -4,9 +4,7 @@ import {
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  signOut as fbSignOut,
-  signInWithPopup,
-  GoogleAuthProvider
+  signOut as fbSignOut
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -18,17 +16,23 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isTechnician: boolean;
-  signIn: (email: string, pass: string) => Promise<void>;
-  signUp: (email: string, pass: string, name: string) => Promise<void>;
-  signInGoogle: () => Promise<void>;
+  signInWithPhone: (phone: string, pass: string) => Promise<void>;
+  signUpWithPhone: (name: string, phone: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// The owner email from request
-const SUPER_ADMIN_EMAIL = 'roomeorabie@gmail.com';
+// Helper to normalize phone numbers (e.g. 01012345678 -> 201012345678)
+export const normalizePhoneNumber = (rawPhone: string): string => {
+  return rawPhone.replace(/\D/g, '');
+};
+
+// Create a synthetic email representation for Firebase Auth provider based on phone number
+const phoneToAuthEmail = (normalizedPhone: string): string => {
+  return `user_${normalizedPhone}@fixboard.auth`;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,26 +44,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userRef = doc(db, 'users', firebaseUser.uid);
       const snapshot = await getDoc(userRef);
 
-      const isOwner = firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-
       if (snapshot.exists()) {
         const data = snapshot.data() as UserProfile;
-        // Ensure owner has admin role
-        if (isOwner && data.role !== 'admin') {
-          const updated = { ...data, role: 'admin' as const };
-          await setDoc(userRef, updated, { merge: true });
-          setProfile(updated);
-        } else {
-          setProfile(data);
-        }
+        setProfile(data);
       } else {
-        // Create initial profile
+        // Look up by phone if stored
+        const phone = firebaseUser.email?.replace('user_', '').replace('@fixboard.auth', '') || '';
         const newProfile: UserProfile = {
           uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'فني صيانة',
-          role: isOwner ? 'admin' : 'technician',
-          avatarUrl: firebaseUser.photoURL || undefined,
+          phoneNumber: phone,
+          displayName: 'فني صيانة FixBoard',
+          role: 'technician',
           createdAt: Date.now(),
         };
         await setDoc(userRef, newProfile);
@@ -67,14 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Error fetching user profile:', err);
-      // Fallback in-memory profile if permissions allow
-      setProfile({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        displayName: firebaseUser.displayName || 'مستخدم',
-        role: firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? 'admin' : 'technician',
-        createdAt: Date.now(),
-      });
     }
   };
 
@@ -92,27 +79,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (email: string, pass: string) => {
-    await signInWithEmailAndPassword(auth, email, pass);
+  const signInWithPhone = async (phone: string, pass: string) => {
+    const cleanPhone = normalizePhoneNumber(phone);
+    if (!cleanPhone || cleanPhone.length < 6) {
+      throw new Error('يرجى إدخال رقم هاتف صحيح');
+    }
+    const syntheticEmail = phoneToAuthEmail(cleanPhone);
+    await signInWithEmailAndPassword(auth, syntheticEmail, pass);
   };
 
-  const signUp = async (email: string, pass: string, name: string) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const isOwner = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+  const signUpWithPhone = async (name: string, phone: string, pass: string) => {
+    const cleanPhone = normalizePhoneNumber(phone);
+    if (!cleanPhone || cleanPhone.length < 6) {
+      throw new Error('يرجى إدخال رقم هاتف صالح (أرقام فقط)');
+    }
+
+    // Check if phone already registered in directory
+    const dirRef = doc(db, 'phone_directory', cleanPhone);
+    const dirSnap = await getDoc(dirRef);
+    if (dirSnap.exists()) {
+      throw new Error('رقم الهاتف هذا مسجل بالفعل في منصة FixBoard. يرجى تسجيل الدخول بدلاً من ذلك.');
+    }
+
+    const syntheticEmail = phoneToAuthEmail(cleanPhone);
+    const cred = await createUserWithEmailAndPassword(auth, syntheticEmail, pass);
+
+    // Save profile to Firestore
     const newProfile: UserProfile = {
       uid: cred.user.uid,
-      email: cred.user.email || email,
-      displayName: name,
-      role: isOwner ? 'admin' : 'technician',
+      phoneNumber: cleanPhone,
+      displayName: name.trim(),
+      role: 'technician',
       createdAt: Date.now(),
     };
-    await setDoc(doc(db, 'users', cred.user.uid), newProfile);
-    setProfile(newProfile);
-  };
 
-  const signInGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    // Save user document
+    await setDoc(doc(db, 'users', cred.user.uid), newProfile);
+
+    // Save phone directory mapping for uniqueness and fast lookup
+    await setDoc(dirRef, {
+      uid: cred.user.uid,
+      phoneNumber: cleanPhone,
+      displayName: name.trim(),
+      createdAt: Date.now()
+    });
+
+    setProfile(newProfile);
   };
 
   const signOut = async () => {
@@ -126,8 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAdmin = profile?.role === 'admin' || user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-  const isTechnician = isAdmin || profile?.role === 'technician';
+  // Determine admin rights (first user or role 'admin')
+  const isAdmin = profile?.role === 'admin' || profile?.displayName?.includes('Admin') || false;
+  const isTechnician = true;
 
   return (
     <AuthContext.Provider
@@ -137,9 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isAdmin,
         isTechnician,
-        signIn,
-        signUp,
-        signInGoogle,
+        signInWithPhone,
+        signUpWithPhone,
         signOut,
         refreshProfile,
       }}

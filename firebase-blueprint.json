@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Phone technician or admin user account with phone number authentication",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "technician", "user"] },
+        "workshopName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "phoneNumber", "displayName", "role", "createdAt"]
+    },
+    "Brand": {
+      "title": "Phone Brand",
+      "description": "Manufacturer (e.g. Samsung, Apple)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles indexed by uid"
+    },
+    "/phone_directory/{normalizedPhone}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Lookup index from phone number to user account uid"
+    },
+    "/brands/{brandId}": {
+      "schema": { "$ref": "#/entities/Brand" },
+      "description": "Phone brands collection"
+    }
+  }
+}
