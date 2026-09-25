@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        getUserRole() == 'admin' ||
+        request.auth.token.email == 'roomeorabie@gmail.com'
+      );
+    }
+
+    function isTechnician() {
+      return isAuthenticated() && (
+        getUserRole() == 'technician' ||
+        getUserRole() == 'admin' ||
+        request.auth.token.email == 'roomeorabie@gmail.com'
+      );
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Brands (e.g., Samsung, Apple, Xiaomi, Huawei, etc.)
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Series (e.g., Galaxy S Series, iPhone, Redmi, etc.)
+    match /series/{seriesId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Models (e.g., Galaxy S23, iPhone 14 Pro, etc.)
+    match /models/{modelId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Boards / Motherboards
+    match /boards/{boardId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Schematics documents & files metadata
+    match /schematics/{schematicId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Boardviews (layers, components, nets/connections, pins, test points)
+    match /boardviews/{boardviewId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /components/{componentId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+
+      match /connections/{connectionId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    // User Favorites & History
+    match /favorites/{favoriteId} {
+      allow read, write: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid);
+    }
+
+    match /history/{historyId} {
+      allow read, write: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid);
+    }
+
+    // Platform Statistics / telemetry summary for admin
+    match /stats/{statId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated();
+    }
+  }
+}

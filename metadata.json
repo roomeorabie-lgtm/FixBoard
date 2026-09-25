@@ -1,0 +1,8 @@
+{
+  "name": "VoltFix Pro - منصة مخططات صيانة الهواتف الذكية",
+  "description": "منصة احترافية متكاملة لفنيي صيانة الهواتف المحمولة: قاعدة بيانات للشركات والموديلات، مستعرض تفاعلي للبوردات والمسارات والمكونات (Boardview & Schematics)، محرك بحث فوري، ولوحة تحكم متطورة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
