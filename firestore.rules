@@ -2,24 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() && (
-        getUserRole() == 'admin' ||
-        request.auth.token.email == 'roomeorabie@gmail.com' ||
-        request.auth.token.email == 'admin_fixboard@phone.fixboard.local'
-      );
-    }
-
-    // Phone directory lookup for login/unique phone verification
+    // Phone directory lookup: stores phone number uniqueness and password hash
     match /phone_directory/{phoneNumber} {
       allow read: if true;
       allow write: if true;
@@ -28,62 +11,58 @@ service cloud.firestore {
     // User profiles
     match /users/{userId} {
       allow read: if true;
-      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin()) || !isAuthenticated();
+      allow write: if true;
     }
 
-    // Brands (e.g., Samsung, Apple, Xiaomi, Huawei, etc.)
+    // Brands (Samsung, Apple, Xiaomi, Huawei, etc.)
     match /brands/{brandId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
-    // Series (e.g., Galaxy S Series, iPhone, Redmi, etc.)
+    // Series (Galaxy S, iPhone, Redmi, etc.)
     match /series/{seriesId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
-    // Models (e.g., Galaxy S23, iPhone 14 Pro, etc.)
+    // Models
     match /models/{modelId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
-    // Boards / Motherboards
+    // Motherboards
     match /boards/{boardId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
-    // Schematics documents & files metadata
-    match /schematics/{schematicId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Boardviews (layers, components, nets/connections, pins, test points)
-    match /boardviews/{boardviewId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
+    // Components on motherboards
     match /boardComponents/{compDocId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
+    // Electrical Net traces
     match /boardNets/{netDocId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
+    }
+
+    // Schematics documents
+    match /schematics/{schematicId} {
+      allow read: if true;
+      allow write: if true;
     }
 
     // User Favorites & History
     match /favorites/{favoriteId} {
-      allow read, write: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid);
+      allow read, write: if true;
     }
 
     match /history/{historyId} {
-      allow read, write: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid);
+      allow read, write: if true;
     }
   }
 }
